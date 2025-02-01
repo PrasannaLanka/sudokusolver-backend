@@ -1,15 +1,21 @@
-from flask import Flask, request, jsonify
+import random
+import numpy as np
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Allow requests from your React frontend
+CORS(app)
 
 def is_valid(board, row, col, num):
     for i in range(9):
         if board[row][i] == num or board[i][col] == num:
             return False
-        if board[row // 3 * 3 + i // 3][col // 3 * 3 + i % 3] == num:
-            return False
+
+    start_row, start_col = (row // 3) * 3, (col // 3) * 3
+    for i in range(3):
+        for j in range(3):
+            if board[start_row + i][start_col + j] == num:
+                return False
     return True
 
 def solve_sudoku(board):
@@ -25,21 +31,30 @@ def solve_sudoku(board):
                 return False
     return True
 
-@app.route('/solve-sudoku', methods=['POST'])
-def solve():
-    try:
-        data = request.get_json()
-        board = data.get('board')
-        if not board or len(board) != 9 or any(len(row) != 9 for row in board):
-            return jsonify({"error": "Invalid board format"}), 400
+def generate_sudoku():
+    board = np.zeros((9, 9), dtype=int)
+    solve_sudoku(board)
+    puzzle = board.copy()
+    for _ in range(40):  # Remove 40 numbers to create a puzzle
+        row, col = random.randint(0, 8), random.randint(0, 8)
+        puzzle[row][col] = 0
+    return board.tolist(), puzzle.tolist()
 
-        solved_board = [row[:] for row in board]  # Copy the board
-        if solve_sudoku(solved_board):
-            return jsonify({"solvedBoard": solved_board})
-        else:
-            return jsonify({"error": "No solution exists"}), 400
-    except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+@app.route('/generate', methods=['GET'])
+def generate():
+    solution, puzzle = generate_sudoku()
+    return jsonify({'puzzle': puzzle, 'solution': solution})
+
+@app.route('/check', methods=['POST'])
+def check_solution():
+    data = request.get_json()
+    user_board = data['board']
+    solution = data['solution']
+
+    if user_board == solution:
+        return jsonify({'message': 'You won! 🎉'})
+    else:
+        return jsonify({'message': 'You lost. Try again! ❌'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
