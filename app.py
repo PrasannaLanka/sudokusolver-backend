@@ -73,14 +73,30 @@ def generate():
 @app.route('/check', methods=['POST'])
 def check_solution():
     """API endpoint to check if the user's solution is correct."""
-    data = request.get_json()
+    data = request.get_json()    
+
+    if not data or 'board' not in data or 'solution' not in data:
+        return jsonify({'error': 'Invalid request. Missing board or solution.'}), 400
+
     user_board = data['board']
     solution = data['solution']
 
+    # Validate that both user_board and solution are 9x9 grids
+    if not isinstance(user_board, list) or not isinstance(solution, list):
+        return jsonify({'error': 'Invalid data format. Expected 9x9 grids.'}), 400
+
+    if len(user_board) != 9 or len(solution) != 9:
+        return jsonify({'error': 'Invalid data format. Expected 9x9 grids.'}), 400
+
+    for row in user_board + solution:
+        if not isinstance(row, list) or len(row) != 9:
+            return jsonify({'error': 'Invalid data format. Expected 9x9 grids.'}), 400
+
+    # Check if the user's board matches the solution
     if user_board == solution:
-        return jsonify({'message': 'You won! 🎉'})
+        return jsonify({'message': 'You won! 🎉', 'status': 'success'})
     else:
-        return jsonify({'message': 'You lost. Try again! ❌'}), 400
+        return jsonify({'message': 'You lost. Try again! ❌', 'status': 'failure'})
 
 if __name__ == '__main__':
     app.run(debug=True)
