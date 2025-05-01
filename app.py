@@ -6,6 +6,29 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+def is_board_valid(board):
+    def is_valid_group(group):
+        nums = [n for n in group if n != 0]
+        return len(nums) == len(set(nums))
+
+    for i in range(9):
+        row = board[i]
+        col = [board[r][i] for r in range(9)]
+        if not is_valid_group(row) or not is_valid_group(col):
+            return False
+
+    for box_row in range(0, 9, 3):
+        for box_col in range(0, 9, 3):
+            block = [
+                board[r][c]
+                for r in range(box_row, box_row + 3)
+                for c in range(box_col, box_col + 3)
+            ]
+            if not is_valid_group(block):
+                return False
+
+    return True
+
 def is_valid(board, row, col, num):
     """Check if a number can be placed in the given row and column."""
     for i in range(9):
@@ -33,10 +56,34 @@ def solve_sudoku(board):
                 return False
     return True
 
+def has_unique_solution(board):
+    """Check if a Sudoku board has only one valid solution."""
+    count = 0
+
+    def solve(b):
+        nonlocal count
+        for row in range(9):
+            for col in range(9):
+                if b[row][col] == 0:
+                    for num in range(1, 10):
+                        if is_valid(b, row, col, num):
+                            b[row][col] = num
+                            solve(b)
+                            b[row][col] = 0
+                    return
+        count += 1
+        if count > 1:
+            return  # Early exit if multiple solutions
+
+    copied = [row[:] for row in board]
+    solve(copied)
+    return count == 1
+
 def generate_sudoku(difficulty):
     """Generate a Sudoku puzzle based on difficulty level."""
     board = np.zeros((9, 9), dtype=int)
     solve_sudoku(board)
+    solution = board.copy()
     puzzle = board.copy()
 
     # Define number of given clues based on difficulty
@@ -45,11 +92,11 @@ def generate_sudoku(difficulty):
     elif difficulty == 'medium':
         num_clues = random.randint(22, 36)
     elif difficulty == 'hard':
-        num_clues = random.randint(17, 22)    
+        num_clues = random.randint(17, 22)
     else:
         return None, None  # Invalid difficulty
 
-    # Remove numbers until only `num_clues` remain
+    # Remove numbers until only `num_clues` remain, ensuring a unique solution
     removed_positions = set()
     while (81 - len(removed_positions)) > num_clues:
         row, col = random.randint(0, 8), random.randint(0, 8)
@@ -57,7 +104,12 @@ def generate_sudoku(difficulty):
             puzzle[row][col] = 0
             removed_positions.add((row, col))
 
-    return board.tolist(), puzzle.tolist()
+            # Check if the puzzle still has a unique solution
+            if not has_unique_solution(puzzle):
+                puzzle[row][col] = solution[row][col]
+                removed_positions.remove((row, col))
+
+    return solution.tolist(), puzzle.tolist()
 
 @app.route('/generate', methods=['GET'])
 def generate():
@@ -66,37 +118,35 @@ def generate():
     solution, puzzle = generate_sudoku(difficulty)
     
     if solution is None:
-        return jsonify({'error': 'Invalid difficulty. Choose from easy, medium, hard, or evil'}), 400
+        return jsonify({'error': 'Invalid difficulty. Choose from easy, medium, hard.'}), 400
     
     return jsonify({'puzzle': puzzle, 'solution': solution, 'difficulty': difficulty})
 
 @app.route('/check', methods=['POST'])
 def check_solution():
-    """API endpoint to check if the user's solution is correct."""
-    data = request.get_json()    
+    data = request.get_json()
 
-    if not data or 'board' not in data or 'solution' not in data:
-        return jsonify({'error': 'Invalid request. Missing board or solution.'}), 400
+    if not data or 'board' not in data:
+        return jsonify({'error': 'Invalid request. Missing board.'}), 400
 
     user_board = data['board']
-    solution = data['solution']
 
-    # Validate that both user_board and solution are 9x9 grids
-    if not isinstance(user_board, list) or not isinstance(solution, list):
-        return jsonify({'error': 'Invalid data format. Expected 9x9 grids.'}), 400
+    if not isinstance(user_board, list) or len(user_board) != 9:
+        return jsonify({'error': 'Invalid board format. Expected 9x9 grid.'}), 400
 
-    if len(user_board) != 9 or len(solution) != 9:
-        return jsonify({'error': 'Invalid data format. Expected 9x9 grids.'}), 400
-
-    for row in user_board + solution:
+    for row in user_board:
         if not isinstance(row, list) or len(row) != 9:
-            return jsonify({'error': 'Invalid data format. Expected 9x9 grids.'}), 400
+            return jsonify({'error': 'Invalid board format. Each row must have 9 elements.'}), 400
 
-    # Check if the user's board matches the solution
-    if user_board == solution:
-        return jsonify({'message': 'You won! 🎉', 'status': 'success'})
+    # Check for 0s — if any, the board is incomplete
+    if any(0 in row for row in user_board):
+        return jsonify({'message': 'Incomplete board. Fill all cells.', 'status': 'incomplete'})
+
+    # Validate based on Sudoku rules
+    if is_board_valid(user_board):
+        return jsonify({'message': 'You won! 🎉 Valid Sudoku!', 'status': 'success'})
     else:
-        return jsonify({'message': 'You lost. Try again! ❌', 'status': 'failure'})
+        return jsonify({'message': 'Invalid solution. ❌ Check Sudoku rules.', 'status': 'failure'})
 
 if __name__ == '__main__':
     app.run(debug=True)
