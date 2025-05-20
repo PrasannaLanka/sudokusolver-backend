@@ -2,10 +2,18 @@ import random
 import numpy as np
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from auth import auth_bp, init_db
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 app = Flask(__name__)
+app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 CORS(app)
 
+jwt = JWTManager(app)
+
+init_db()
+app.register_blueprint(auth_bp)
 def is_board_valid(board):
     def is_valid_group(group):
         nums = [n for n in group if n != 0]
@@ -110,6 +118,12 @@ def generate_sudoku(difficulty):
                 removed_positions.remove((row, col))
 
     return solution.tolist(), puzzle.tolist()
+
+@app.route('/protected_data', methods=['GET'])
+@jwt_required()
+def protected_data():
+    current_user = get_jwt_identity()
+    return jsonify({"message": f"Hello {current_user}, you're authenticated!"})
 
 @app.route('/generate', methods=['GET'])
 def generate():
