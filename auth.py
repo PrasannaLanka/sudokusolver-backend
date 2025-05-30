@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
 auth_bp = Blueprint('auth', __name__)
@@ -19,8 +20,13 @@ def init_db():
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
-    username = data['username']
-    password = data['password']
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
+
+    hashed_password = generate_password_hash(password)
 
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
@@ -28,21 +34,29 @@ def signup():
     if cursor.fetchone():
         return jsonify({"error": "User already exists"}), 400
 
-    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
     conn.commit()
-    return jsonify({"message": "Signup successful"})
+    conn.close()
+
+    return jsonify({"message": "Signup successful"}), 201
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    username = data['username']
-    password = data['password']
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
 
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
-    user = cursor.fetchone()
-    if user:
+    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+    result = cursor.fetchone()
+    conn.close()
+
+    if result and check_password_hash(result[0], password):
         token = create_access_token(identity=username)
-        return jsonify({"token": token})
+        return jsonify({"token": token}), 200
+
     return jsonify({"error": "Invalid credentials"}), 401
