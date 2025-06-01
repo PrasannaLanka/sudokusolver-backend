@@ -5,6 +5,7 @@ import sqlite3
 
 auth_bp = Blueprint('auth', __name__)
 
+# Initialize SQLite DB and create users table if not exists
 def init_db():
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
@@ -17,6 +18,7 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Route for user signup
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -32,6 +34,7 @@ def signup():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     if cursor.fetchone():
+        conn.close()
         return jsonify({"error": "User already exists"}), 400
 
     cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
@@ -40,6 +43,7 @@ def signup():
 
     return jsonify({"message": "Signup successful"}), 201
 
+# Route for user login
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
