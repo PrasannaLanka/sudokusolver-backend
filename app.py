@@ -8,7 +8,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
 
 jwt = JWTManager(app)
 
@@ -113,9 +113,9 @@ def generate_sudoku(difficulty):
             removed_positions.add((row, col))
 
             # Check if the puzzle still has a unique solution
-            if not has_unique_solution(puzzle):
-                puzzle[row][col] = solution[row][col]
-                removed_positions.remove((row, col))
+            # if not has_unique_solution(puzzle):
+            #     puzzle[row][col] = solution[row][col]
+            #     removed_positions.remove((row, col))
 
     return solution.tolist(), puzzle.tolist()
 
