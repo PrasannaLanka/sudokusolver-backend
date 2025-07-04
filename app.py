@@ -135,6 +135,22 @@ def generate():
         return jsonify({'error': 'Invalid difficulty. Choose from easy, medium, hard.'}), 400
     
     return jsonify({'puzzle': puzzle, 'solution': solution, 'difficulty': difficulty})
+@app.route('/record_game', methods=['POST'])
+@jwt_required()
+def record_game():
+    data = request.get_json()
+    time_taken = data.get("timeTaken")
+
+    if time_taken is None:
+        return jsonify({"error": "Missing timeTaken"}), 400
+
+    user = get_jwt_identity()
+    # Save to DB or log — for now just print
+    print(f"User {user} completed a game in {time_taken} seconds.")
+    
+    return jsonify({"message": "Time recorded"}), 200
+
+
 
 @app.route('/check', methods=['POST'])
 def check_solution():
