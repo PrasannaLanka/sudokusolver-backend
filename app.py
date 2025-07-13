@@ -5,15 +5,19 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from auth import auth_bp, init_db
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from sudoku_extra import sudoku_bp, init_extra_tables
+from datetime import timedelta
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
-
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)  
 jwt = JWTManager(app)
 
 init_db()
+init_extra_tables()
 app.register_blueprint(auth_bp)
+app.register_blueprint(sudoku_bp)
 def is_board_valid(board):
     def is_valid_group(group):
         nums = [n for n in group if n != 0]
@@ -126,13 +130,26 @@ def protected_data():
     return jsonify({"message": f"Hello {current_user}, you're authenticated!"})
 
 @app.route('/generate', methods=['GET'])
+@jwt_required()
 def generate():
-    """API endpoint to generate a Sudoku puzzle with a specified difficulty."""
+    """API endpoint to generate a Sudoku puzzle with a specified difficulty and clear saved game."""
     difficulty = request.args.get('difficulty', 'medium').lower()
+    user = get_jwt_identity()
+
+    # Delete saved game for this user
+    conn = get_db()
+    conn.execute('DELETE FROM saved_games WHERE username = ?', (user,))
+    conn.commit()
+    conn.close()
+
+    # Generate puzzle
     solution, puzzle = generate_sudoku(difficulty)
     
     if solution is None:
         return jsonify({'error': 'Invalid difficulty. Choose from easy, medium, hard.'}), 400
+
+    return jsonify({'puzzle': puzzle, 'solution': solution, 'difficulty': difficulty})
+
     
     return jsonify({'puzzle': puzzle, 'solution': solution, 'difficulty': difficulty})
 @app.route('/record_game', methods=['POST'])
