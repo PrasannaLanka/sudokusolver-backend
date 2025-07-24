@@ -7,6 +7,8 @@ from auth import auth_bp, init_db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sudoku_extra import sudoku_bp, init_extra_tables
 from datetime import timedelta
+from db_utils import get_db
+
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
@@ -152,21 +154,47 @@ def generate():
 
     
     return jsonify({'puzzle': puzzle, 'solution': solution, 'difficulty': difficulty})
-@app.route('/record_game', methods=['POST'])
-@jwt_required()
-def record_game():
+@app.route("/record_game", methods=["POST"])
+def record_game(current_user):
     data = request.get_json()
     time_taken = data.get("timeTaken")
+    difficulty = data.get("difficulty")
+    date = data.get("date")  # 'YYYY-MM-DD'
 
-    if time_taken is None:
-        return jsonify({"error": "Missing timeTaken"}), 400
+    if time_taken is None or difficulty is None or date is None:
+        return jsonify({"message": "Missing fields", "status": "error"}), 400
 
-    user = get_jwt_identity()
-    # Save to DB or log — for now just print
-    print(f"User {user} completed a game in {time_taken} seconds.")
-    
-    return jsonify({"message": "Time recorded"}), 200
+    conn = get_db()
+    cursor = conn.cursor()
 
+    # Insert into leaderboard
+    cursor.execute(
+        "INSERT INTO leaderboard (username, difficulty, time_taken) VALUES (?, ?, ?)",
+        (current_user, difficulty, time_taken)
+    )
+
+    # Insert/update daily_results
+    cursor.execute(
+        "SELECT id FROM daily_results WHERE username = ? AND date = ?",
+        (current_user, date)
+    )
+    existing = cursor.fetchone()
+
+    if existing:
+        cursor.execute(
+            "UPDATE daily_results SET time_taken = ? WHERE id = ?",
+            (time_taken, existing["id"])
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO daily_results (username, date, time_taken) VALUES (?, ?, ?)",
+            (current_user, date, time_taken)
+        )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Game recorded", "status": "success"})
 
 
 @app.route('/check', methods=['POST'])
