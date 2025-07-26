@@ -155,7 +155,9 @@ def generate():
     
     return jsonify({'puzzle': puzzle, 'solution': solution, 'difficulty': difficulty})
 @app.route("/record_game", methods=["POST"])
-def record_game(current_user):
+@jwt_required()
+def record_game():
+    current_user = get_jwt_identity()
     data = request.get_json()
     time_taken = data.get("timeTaken")
     difficulty = data.get("difficulty")

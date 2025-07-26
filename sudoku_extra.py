@@ -14,13 +14,18 @@ init_extra_tables()
 # --- Leaderboard Endpoints ---
 @sudoku_bp.route('/leaderboard', methods=['GET'])
 def get_leaderboard():
-    difficulty = request.args.get('difficulty', 'medium')
+    difficulty = request.args.get('difficulty', 'easy')
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''SELECT username, time_taken FROM leaderboard
-                      WHERE difficulty = ?
-                      ORDER BY time_taken ASC
-                      LIMIT 10''', (difficulty,))
+    cursor.execute('''
+    SELECT username, time_taken, difficulty FROM leaderboard
+    WHERE LOWER(difficulty) = LOWER(?)
+    ORDER BY time_taken ASC
+    LIMIT 10
+''', (difficulty,))
+
+    # cursor.execute('''SELECT username, time_taken, difficulty FROM leaderboard''')
+
     scores = [dict(row) for row in cursor.fetchall()]
     conn.close() 
     return jsonify(scores)
