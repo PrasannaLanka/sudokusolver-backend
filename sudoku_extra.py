@@ -162,3 +162,16 @@ def delete_saved_game():
     conn.commit()
     conn.close()
     return jsonify({'message': 'Saved game deleted.'})
+
+@sudoku_bp.route('/streak_leaderboard', methods=['GET'])
+def get_streak_leaderboard():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT username, streak_count FROM user_stats
+        ORDER BY streak_count DESC
+        LIMIT 10
+    ''')
+    scores = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(scores)
