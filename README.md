@@ -1,28 +1,22 @@
+# 🔗 Let's Solve Sudoku — Backend
+
+This is the **Flask backend** for the Sudoku Solver app. It handles puzzle generation, user authentication, save/resume functionality, and streak tracking.
 
 ---
 
-## ✅ Backend `README.md`
-
-```markdown
-# 🔗 Let's solve sudoku — Backend
-
-This is the **Flask backend** for the Sudoku Solver app. It handles puzzle generation, user auth, save/resume features, and streak tracking.
-
----
-
-## 🔗 Frontend Repo  
+## 🔗 Frontend Repository  
 👉 [Sudoku Frontend (React)](https://github.com/PrasannaLanka/sudokusolver-frontend.git)
 
 ---
 
 ## ⚙️ Features
 
-- 🧩 Generates valid Sudoku puzzles (3 difficulties)
+- 🧩 Generates valid Sudoku puzzles (Easy / Medium / Hard)
 - 🔐 Login & Signup with JWT authentication
 - 💾 Save/resume last puzzle for each user
-- 🔥 Tracks streaks and last-played time
-- 🗂️ Lightweight SQLite DB for storage
-- 🌐 CORS-enabled for frontend integration
+- 🔥 Tracks daily streaks and last-played date
+- 🗂️ Lightweight SQLite database for storage
+- 🌐 CORS-enabled for seamless frontend integration
 
 ---
 
@@ -36,10 +30,15 @@ This is the **Flask backend** for the Sudoku Solver app. It handles puzzle gener
 
 ---
 
-## 🛠 Setup Instructions
+## 🚀 Setup Instructions
 
 ```bash
+# Clone the repo
 git clone https://github.com/PrasannaLanka/sudokusolver-backend.git
-cd sudoku-backend
+cd sudokusolver-backend
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the server
 python app.py
