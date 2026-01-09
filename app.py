@@ -61,7 +61,10 @@ def solve_sudoku(board):
     for row in range(9):
         for col in range(9):
             if board[row][col] == 0:
-                for num in range(1, 10):
+                nums = list(range(1, 10))
+                random.shuffle(nums)  
+
+                for num in nums:
                     if is_valid(board, row, col, num):
                         board[row][col] = num
                         if solve_sudoku(board):
@@ -69,6 +72,16 @@ def solve_sudoku(board):
                         board[row][col] = 0
                 return False
     return True
+def fill_diagonal_boxes(board):
+    for i in range(0, 9, 3):
+        nums = list(range(1, 10))
+        random.shuffle(nums)
+        idx = 0
+        for r in range(3):
+            for c in range(3):
+                board[i + r][i + c] = nums[idx]
+                idx += 1
+
 
 def has_unique_solution(board):
     """Check if a Sudoku board has only one valid solution."""
@@ -96,6 +109,7 @@ def has_unique_solution(board):
 def generate_sudoku(difficulty):
     """Generate a Sudoku puzzle based on difficulty level."""
     board = np.zeros((9, 9), dtype=int)
+    fill_diagonal_boxes(board)
     solve_sudoku(board)
     solution = board.copy()
     puzzle = board.copy()
