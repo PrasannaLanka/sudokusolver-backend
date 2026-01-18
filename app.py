@@ -12,7 +12,7 @@ from db_utils import get_db
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+CORS(app, supports_credentials=True)
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)  
 jwt = JWTManager(app)
 

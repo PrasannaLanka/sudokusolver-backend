@@ -2,7 +2,8 @@
 
 import sqlite3
 
-DATABASE = 'sudoku.db'
+DATABASE = '/data/sudoku.db'
+
 
 def get_db():
     conn = sqlite3.connect(DATABASE)
