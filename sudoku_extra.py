@@ -9,7 +9,7 @@ from db_utils import get_db, init_extra_tables
 sudoku_bp = Blueprint('sudoku', __name__)
 
 # Initialize tables on module load
-init_extra_tables()
+# init_extra_tables()
 
 # --- Leaderboard Endpoints ---
 @sudoku_bp.route('/leaderboard', methods=['GET'])
