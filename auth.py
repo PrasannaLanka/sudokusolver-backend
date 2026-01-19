@@ -2,12 +2,13 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
+USERS_DB_PATH = "/tmp/users.db"
 
 auth_bp = Blueprint('auth', __name__)
 
 # Initialize SQLite DB and create users table if not exists
 def init_db():
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect(USERS_DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -30,7 +31,7 @@ def signup():
 
     hashed_password = generate_password_hash(password)
 
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect(USERS_DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     if cursor.fetchone():
@@ -53,7 +54,7 @@ def login():
     if not username or not password:
         return jsonify({"error": "Username and password required"}), 400
 
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect(USERS_DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
     result = cursor.fetchone()

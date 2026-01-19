@@ -11,13 +11,22 @@ from db_utils import get_db
 
 
 app = Flask(__name__)
+@app.before_first_request
+def initialize_database():
+    init_db()
+    init_extra_tables()
+
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 CORS(app, supports_credentials=True)
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)  
 jwt = JWTManager(app)
 
-init_db()
-init_extra_tables()
+@app.route("/")
+def health():
+    return {"status": "backend alive"}
+
+# init_db()
+# init_extra_tables()
 app.register_blueprint(auth_bp)
 app.register_blueprint(sudoku_bp)
 def is_board_valid(board):

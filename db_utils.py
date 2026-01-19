@@ -2,7 +2,7 @@
 
 import sqlite3
 
-DATABASE = 'sudoku.db'
+DATABASE = "/tmp/sudoku.db"
 
 
 def get_db():
