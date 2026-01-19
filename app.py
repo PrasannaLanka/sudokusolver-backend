@@ -11,10 +11,9 @@ from db_utils import get_db
 
 
 app = Flask(__name__)
-@app.before_first_request
-def initialize_database():
-    init_db()
-    init_extra_tables()
+
+init_db()
+init_extra_tables()
 
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 CORS(app, supports_credentials=True)
