@@ -17,7 +17,18 @@ init_db()
 init_extra_tables()
 
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
-CORS(app, supports_credentials=True)
+CORS(
+    app,
+    supports_credentials=True,
+    resources={
+        r"/*": {
+            "origins": [
+                "http://localhost:3000"          # local dev
+                # "https://your-frontend.vercel.app"  # production
+            ]
+        }
+    }
+)
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)  
 jwt = JWTManager(app)
 
