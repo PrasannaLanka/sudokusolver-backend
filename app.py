@@ -24,7 +24,7 @@ CORS(
         r"/*": {
             "origins": [
                 "http://localhost:3000"          # local dev
-                # "https://your-frontend.vercel.app"  # production
+                "https://sudokugameforkids.vercel.app", # production
             ]
         }
     }
