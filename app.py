@@ -23,7 +23,7 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "http://localhost:3000"          # local dev
+                "http://localhost:3000",          # local dev
                 "https://sudokugameforkids.vercel.app", # production
             ]
         }
