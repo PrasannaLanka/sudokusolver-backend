@@ -3,6 +3,8 @@
 This is the **Flask backend** for the Sudoku Solver app. It handles puzzle generation, user authentication, save/resume functionality, and streak tracking.
 
 ---
+## 🔗 Website is now live on Vercel and Railway  
+👉 [Sudoku Game for kids](https://sudokugameforkids.vercel.app/)
 
 ## 🔗 Frontend Repository  
 👉 [Sudoku Frontend (React)](https://github.com/PrasannaLanka/sudokusolver-frontend.git)
